@@ -115,6 +115,25 @@ function init() {
   var bubbleChart = d3.selectAll("#bubble").node();
 
   Plotly.newPlot(bubbleChart, bubbleData, bubbleLayout);
+
+  // Formats the inital demographic information
+  var initKeys = Object.keys(allMetadata[0]); // LIST OF KEYS FOR INDEX 0
+  var initValues = Object.values(allMetadata[0]); // LIST OF VALUES FOR INDEX 0
+
+  metaTable = d3.select("#sample-metadata")
+  .selectAll('table')
+  .data(initKeys)
+  .enter()
+  .append("tr")
+  .html(function(initKeys) {
+    return `${initKeys}:`
+  })
+
+  metaTable.append("td")
+  .data(initValues)
+  .html(function(initValues) {
+    return `${initValues}`
+  })
 }
 
 // Calls function to create initial charts
@@ -163,6 +182,8 @@ function updateDash() {
         barY = intoLabel(allSamples[i].otu_ids).slice(0,10);
         bubbleX = allSamples[i].otu_ids;
         bubbleY = allSamples[i].sample_values;
+        var demoKeys = Object.keys(allMetadata[i]); // LIST OF VALUES FOR INDEX 0
+        var demoValues = Object.values(allMetadata[i]); // LIST OF VALUES FOR INDEX 0
         break;
     }
   }
@@ -173,7 +194,22 @@ function updateDash() {
 
   Plotly.restyle(bubbleChart, "x", [bubbleX]);
   Plotly.restyle(bubbleChart, "y", [bubbleY]);
+  
+  metaTable.selectAll('table')
+  .selectAll("tr").remove()
+  .data(demoKeys)
+  .enter()
+  .append("tr")
+  .html(function(demoKeys) {
+    return `${demoKeys}:`
+  })
 
+  metaTable.append("td")
+  .selectAll("td").remove()
+  .data(demoValues)
+  .html(function(demoValues) {
+    return `${demoValues}`
+  })
 }
 
 // Calls the update function based on selected name
@@ -182,27 +218,32 @@ function selectedName() {
   updateDash(selectedOption)
 }
 
-// // ADD ALL OF THIS TO INIT FUNCTION WHEN IT ALL WORKS
-// // Isolates demographic dictionary data
-// var demoData = data.metadata[0];
 
-// console.log("Demographic Data:", demoData);
+
+// // ADD ALL OF THIS TO INIT + UPDATE DASH FUNCTIONS WHEN IT ALL WORKS
+// // Isolates demographic dictionary data
+// var allMetadata = data.metadata; // LIST OF DICTS
+
+// console.log("Demographic Data:", allMetadata);
 
 // // Create arrays of dictionary keys and values
-// var demoKeys = Object.keys(demoData);
-// var demoValues = Object.values(demoData);
+// var initKeys = Object.keys(allMetadata[0]); // LIST OF KEYS FOR INDEX 0
+// var initValues = Object.values(allMetadata[0]); // LIST OF VALUES FOR INDEX 0
 
-// console.log("Demographic Keys:", demoKeys);
-// console.log("Demographic Values:", demoValues);
+// console.log("Demographic Keys:", initKeys);
+// console.log("Demographic Values:", initValues); // THIS ONE WILL CHANGE
 
-// // THIS DOES NOT WORK
-// for (var i = 0; i < demoData.length; i++) {
-//   demoLog = d3.select("#sample-metadata");
-//   demoLog.data(demoData)
-//   .selectAll()
-//   .enter()
-//   .append("h5")
-//   .html(function(x) {
-//     return `<h5>${demoKeys[x], ":", demoValuesp[x]}</h5>`
-//   })
-// }
+// metaTable = d3.select("#sample-metadata")
+// .selectAll('table')
+// .data(initKeys)
+// .enter()
+// .append("tr")
+// .html(function(initKeys) {
+//     return `${initKeys}:`
+// })
+
+// metaTable.append("td")
+// .data(initValues)
+// .html(function(initValues) {
+//   return `${initValues}`
+// })
