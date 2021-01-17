@@ -60,51 +60,149 @@ var data = {
 
 // d3.json('samples.json')  THIS IS HOW THE JSON DATA WOULD BE IMPORTED, IF NO PROBLEMS WERE ENCOUNTERED
 
-console.log("Raw Data:", data);
+// Used to populate dropdown menu and cases
+var allNames = data.names;
 
-// Create variables for the 3 bar graph components
-var sampleValues = data.samples[0].sample_values;
-var otuIDs = data.samples[0].otu_ids;
-var otuLabels = data.samples[0].otu_labels;
+//Used to populate demographic info
+var allMetadata = data.metadata;
 
-console.log("Sample Values:", sampleValues);
-console.log("OTU IDs:", otuIDs);
-console.log("OTU Labels:", otuLabels);
+// Used to populate charts
+var allSamples = data.samples;
 
-// Find the Top 10 OTU data
-var slicedSVs = sampleValues.slice(0,10);
-var slicedIDs = otuIDs.slice(0,10);
-var slicedLabels = otuLabels.slice(0,10);
+function init() {
+  // Creates the initial horizontal bar chart
+  var initSample = allSamples[0].sample_values;
+  var initIDs = allSamples[0].otu_ids;
+  var initLabels = allSamples[0].otu_labels;
 
-console.log("Top 10 Sample Values:", slicedSVs);
-console.log("Top 10 OTU IDs:", slicedIDs);
-console.log("Top 10 OTU Labels:", slicedLabels);
+  var stringIDs = initIDs.map(String).slice(0,10);
 
-// Changing OTU IDs to strings
-var stringIDs = slicedIDs.map(String);
+  var barData = [{
+    x: initSample.slice(0,10),
+    y: intoLabel(stringIDs),
+    text: initLabels.slice(0,10),
+    type: 'bar',
+    orientation: 'h'
+  }];
 
-console.log("This is text now:", stringIDs);
+  var barLayout = {
+    title: 'Top 10 OTUs',
+    bargap: 0.1
+  };
 
-fullIDs = [];
+  var barChart = d3.selectAll("#bar").node();
 
-for (var i = 0; i < stringIDs.length; i++) {
-  fullIDs.push("OTU " + stringIDs[i])
-};
+  Plotly.newPlot(barChart, barData, barLayout);
 
-console.log("Full OTU IDs for x-axis:", fullIDs);
+  // Creates the initial bubble chart
+  var bubbleData = [{
+    x: initIDs,
+    y: initSample,
+    text: initLabels,
+    mode: "markers",
+    marker: {
+      size: initSample,
+      color: initIDs
+    }
+  }];
 
-// Creating the horizontal bar chart
-var data = [{
-  x: slicedSVs,
-  y: fullIDs,
-  text: slicedLabels,
-  type: 'bar',
-  orientation: 'h'
-}];
+  var bubbleLayout = {
+    xaxis: {
+      title: "OTU ID"
+    }
+  };
 
-var layout = {
-  title: 'Top 10 OTUs Found in {INDIVIDUAL ID} Belly Button',
-  bargap: 0.1
-};
+  var bubbleChart = d3.selectAll("#bubble").node();
 
-Plotly.newPlot('bar', data, layout);
+  Plotly.newPlot(bubbleChart, bubbleData, bubbleLayout);
+}
+
+// Calls function to create initial charts
+init();
+
+// Formats OTU IDs into labels for charts
+function intoLabel(stringIDs) {
+  var fullIDs = [];
+    for (var i = 0; i < stringIDs.length; i++) {
+    fullIDs.push("OTU " + stringIDs[i])
+  };
+  return fullIDs;
+}
+
+// Populates dropdown with Names
+d3.select("#selDataset")
+  .selectAll('options')
+  .data(allNames)
+  .enter()
+  .append('option')
+  .text(function (d) {return d;})
+  .attr('value', function (d) {return d;})
+
+d3.select("#selDataset").on("change", selectedName);
+
+// Updates dashboard based on chosen Name
+function updateDash() {
+  // D3 selects and assigns the relevant elements
+  var dropdownMenu = d3.select("#selDataset");
+  
+  var name = dropdownMenu.node().value;
+
+  var barChart = d3.select("#bar").node();
+  var bubbleChart = d3.select("#bubble").node();
+
+  var barX = [];
+  var barY = [];
+  var bubbleX = [];
+  var bubbleY = [];
+  
+  // Loops through the provide list of Names and creates cases for each
+  for (var i = 0; i < allNames.length; i++) {
+    switch(name) {
+      case allNames[i]:
+        barX = allSamples[i].sample_values.slice(0,10);
+        barY = intoLabel(allSamples[i].otu_ids).slice(0,10);
+        bubbleX = allSamples[i].otu_ids;
+        bubbleY = allSamples[i].sample_values;
+        break;
+    }
+  }
+
+  // Restyles the initial charts based on case parameters
+  Plotly.restyle(barChart, "x", [barX]);
+  Plotly.restyle(barChart, "y", [barY]);
+
+  Plotly.restyle(bubbleChart, "x", [bubbleX]);
+  Plotly.restyle(bubbleChart, "y", [bubbleY]);
+
+}
+
+// Calls the update function based on selected name
+function selectedName() {
+  var selectedOption = d3.select(this).property("value")
+  updateDash(selectedOption)
+}
+
+// // ADD ALL OF THIS TO INIT FUNCTION WHEN IT ALL WORKS
+// // Isolates demographic dictionary data
+// var demoData = data.metadata[0];
+
+// console.log("Demographic Data:", demoData);
+
+// // Create arrays of dictionary keys and values
+// var demoKeys = Object.keys(demoData);
+// var demoValues = Object.values(demoData);
+
+// console.log("Demographic Keys:", demoKeys);
+// console.log("Demographic Values:", demoValues);
+
+// // THIS DOES NOT WORK
+// for (var i = 0; i < demoData.length; i++) {
+//   demoLog = d3.select("#sample-metadata");
+//   demoLog.data(demoData)
+//   .selectAll()
+//   .enter()
+//   .append("h5")
+//   .html(function(x) {
+//     return `<h5>${demoKeys[x], ":", demoValuesp[x]}</h5>`
+//   })
+// }
